@@ -91,6 +91,7 @@ impl Reporter {
 fn format_item(item: &RustItem) -> String {
     match &item.kind {
         ItemKind::Struct => format!("struct {}", item.name),
+        ItemKind::Enum => format!("enum {}", item.name),
         ItemKind::Trait => format!("trait {}", item.name),
         ItemKind::TraitMethod { trait_name } => format!("{}::{}", trait_name, item.name),
         ItemKind::Function => format!("fn {}", item.name),

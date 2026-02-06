@@ -7,6 +7,9 @@ ERROR: example/src/lib.rs
     - struct Handle (line 38)
     - struct Vec3 (line 42)
   Attribute mismatches:
+    - enum MathAnimationError (code line 12, spec line 2)
+      Code attributes: # [derive (Debug)]
+      Spec attributes: # [derive (Debug , thiserror :: Error)]
     - struct MathObject (code line 22, spec line 2)
       Code attributes: none
       Spec attributes: # [derive (Component)]

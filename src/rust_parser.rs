@@ -1,5 +1,5 @@
 use anyhow::Result;
-use syn::{visit::Visit, File, ItemStruct, ItemTrait, ItemFn, TraitItem, TraitItemFn, Visibility};
+use syn::{visit::Visit, File, ItemStruct, ItemTrait, ItemFn, ItemEnum, TraitItem, TraitItemFn, Visibility};
 use proc_macro2::TokenStream;
 
 #[derive(Debug, Clone)]
@@ -31,6 +31,7 @@ impl std::hash::Hash for RustItem {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ItemKind {
     Struct,
+    Enum,
     Trait,
     TraitMethod { trait_name: String },
     Function,
@@ -125,6 +126,34 @@ impl StripAttrs for ItemFn {
     }
 }
 
+impl StripAttrs for ItemEnum {
+    fn strip_attrs(&mut self) {
+        self.attrs.clear();
+        for variant in self.variants.iter_mut() {
+            StripAttrs::strip_attrs(variant);
+        }
+    }
+}
+
+impl StripAttrs for syn::Variant {
+    fn strip_attrs(&mut self) {
+        self.attrs.clear();
+        match &mut self.fields {
+            syn::Fields::Named(fields) => {
+                for field in fields.named.iter_mut() {
+                    field.attrs.clear();
+                }
+            }
+            syn::Fields::Unnamed(fields) => {
+                for field in fields.unnamed.iter_mut() {
+                    field.attrs.clear();
+                }
+            }
+            syn::Fields::Unit => {}
+        }
+    }
+}
+
 impl StripAttrs for TraitItemFn {
     fn strip_attrs(&mut self) {
         self.attrs.clear();
@@ -151,6 +180,33 @@ impl<'ast> Visit<'ast> for ItemCollector {
             self.items.push(RustItem::new(
                 name,
                 ItemKind::Struct,
+                signature,
+                tokens,
+                attributes,
+                line_number,
+            ));
+        }
+    }
+
+    fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
+        if self.should_include(&node.vis) {
+            let name = node.ident.to_string();
+            let line_number = self.calculate_line_number(&name, 0);
+            
+            // Extract attributes
+            let attributes: Vec<String> = node.attrs.iter()
+                .map(|attr| quote::quote!(#attr).to_string())
+                .collect();
+            
+            // Build signature and tokens without attributes
+            let mut item_without_attrs = node.clone();
+            item_without_attrs.strip_attrs();
+            let signature = quote::quote!(#item_without_attrs).to_string();
+            let tokens: TokenStream = quote::quote!(#item_without_attrs);
+            
+            self.items.push(RustItem::new(
+                name,
+                ItemKind::Enum,
                 signature,
                 tokens,
                 attributes,
@@ -300,5 +356,21 @@ mod tests {
         let items = parse_rust_file(code, false).unwrap();
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].name, "PublicStruct");
+    }
+
+    #[test]
+    fn test_parse_enum() {
+        let code = r#"
+            pub enum MyEnum {
+                VariantA,
+                VariantB(i32),
+                VariantC { x: f32 },
+            }
+        "#;
+        
+        let items = parse_rust_file(code, false).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].name, "MyEnum");
+        assert!(matches!(items[0].kind, ItemKind::Enum));
     }
 }
