@@ -1,0 +1,22 @@
+[package]
+name = "spec-check"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "visit"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+pulldown-cmark = "0.9"
+walkdir = "2.4"
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+
+[package.metadata.spec-check]
+ignored-attributes = ["doc"]
+check-private = false
+src-dir = "example/src"
+spec-dir = "example/spec"
+log-file = "spec-check.log"

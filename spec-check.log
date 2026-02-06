@@ -1,0 +1,21 @@
+
+ERROR: example/src/lib.rs
+  Items in code but not in spec:
+    - struct Color (line 25)
+    - struct Assets (line 38)
+    - struct Mesh (line 38)
+    - struct Handle (line 38)
+    - struct Vec3 (line 42)
+  Attribute mismatches:
+    - struct MathObject (code line 22, spec line 2)
+      Code attributes: none
+      Spec attributes: # [derive (Component)]
+    - struct Selectable (code line 24, spec line 5)
+      Code attributes: none
+      Spec attributes: # [derive (Component)]
+
+================================================================================
+SUMMARY
+Total files checked: 1
+Files with errors: 1
+Files passing: 0
